@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 import logging
-from .google_engine import GoogleSttEngine
-from .voice_ai_engine import VoiceAIEngine
+# from .google_engine import GoogleSttEngine
+# from .voice_ai_engine import VoiceAIEngine
+from .my_engine import VietSttEngine
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,11 @@ class SttEngineFactory:
         Raises:
             ValueError: If the engine type is not supported
         """
-        if engine_type == "google":
-            return GoogleSttEngine(config, notifier)
-        elif engine_type == "voice_ai":
-            return VoiceAIEngine(config, notifier)
+        if engine_type == "vietngu":
+            return VietSttEngine(config, notifier)
+        # if engine_type == "google":
+        #     return GoogleSttEngine(config, notifier)
+        # elif engine_type == "voice_ai":
+        #     return VoiceAIEngine(config, notifier)
         else:
             raise ValueError(f"Unsupported STT engine type: {engine_type}")
