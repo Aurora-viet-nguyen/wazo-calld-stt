@@ -204,16 +204,16 @@ class SttService(object):
                 if channel.id in self._current_calls:
                     del self._current_calls[channel.id]
 
-    def _on_error(self, ws, error):
+    def _on_error(self, ws, exc):
         """Handle websocket errors
         
         Args:
             ws: The websocket
             error: The error
         """
-        logger.error(f"STT websocket error: {error}")
+        logger.error(f"STT websocket error: {exc}")
 
-    def _on_close(self, ws, channel, tenant_uuid, dump):
+    def _on_close(self, ws, close_status_code, close_msg, channel, tenant_uuid, dump):
         """Handle websocket close
         
         Args:
@@ -224,6 +224,9 @@ class SttService(object):
         """
         # Process any remaining audio
         try:
+            logger.info(
+                f"Closing for channel {channel.id} with code ({close_status_code}), details: {close_msg}"
+            )
             self._send_buffer(channel, tenant_uuid, dump)
         except Exception as e:
             logger.error(f"Error sending final buffer for channel {channel.id}: {e}")
