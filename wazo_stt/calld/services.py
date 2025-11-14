@@ -169,7 +169,9 @@ class SttService(object):
             tenant_uuid: The tenant UUID
         """
         dump = self._open_dump(channel)
-        
+
+        logger.info(f"channel type: {type(channel)}")
+
         # Connect to ARI websocket for audio stream
         ws = WebSocketApp(self._config["stt"]["ari_websocket_stream"],
                           header={"Channel-ID": channel.id},
