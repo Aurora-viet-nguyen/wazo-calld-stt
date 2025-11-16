@@ -200,7 +200,7 @@ class SttService(object):
         # Connect to ARI websocket for audio stream
         ws = WebSocketApp(
             self._config["stt"]["ari_websocket_stream"],
-            header={"Call-ID": channel.id},
+            # header={"Call-ID": channel.id},
             subprotocols=["stream-call"],
             on_error=self._on_error,
             on_message=functools.partial(
