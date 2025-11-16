@@ -198,19 +198,18 @@ class SttService(object):
                 logger.error(f"Rejected {proto}: {e}")
 
         # Connect to ARI websocket for audio stream
-        ws = WebSocketApp(self._config["stt"]["ari_websocket_stream"],
-                          header={"Channel-ID": channel.id},
-                          subprotocols=["stream-channel"],
-                          on_error=self._on_error,
-                          on_message=functools.partial(self._on_message,
-                                                       channel=channel,
-                                                       tenant_uuid=tenant_uuid,
-                                                       dump=dump),
-                          on_close=functools.partial(self._on_close,
-                                                     channel=channel,
-                                                     tenant_uuid=tenant_uuid,
-                                                     dump=dump)
-                          )
+        ws = WebSocketApp(
+            self._config["stt"]["ari_websocket_stream"],
+            header={"Call-ID": channel.id},
+            subprotocols=["stream-call"],
+            on_error=self._on_error,
+            on_message=functools.partial(
+                self._on_message, channel=channel, tenant_uuid=tenant_uuid, dump=dump
+            ),
+            on_close=functools.partial(
+                self._on_close, channel=channel, tenant_uuid=tenant_uuid, dump=dump
+            ),
+        )
         
         # Store the websocket instance for potential early closure
         self._websockets[channel.id] = ws
