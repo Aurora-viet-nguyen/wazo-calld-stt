@@ -170,38 +170,11 @@ class SttService(object):
         """
         dump = self._open_dump(channel)
 
-        logger.info(f"channel type: {type(channel)}")
-        logger.info(f"channel ID: {channel.id}")
-
-        protocols_to_test = [
-            "json",
-            "binary",
-            "stream",
-            "stream-channel",
-            "stream-call",
-            "audio-stream",
-            "stt-stream",
-            "v1",
-            "v2",
-        ]
-
-        for proto in protocols_to_test:
-            try:
-                logger.info(f"Testing protocol: {proto}")
-                ws = WebSocketApp(
-                    self._config["stt"]["ari_websocket_stream"],
-                    subprotocols=[proto],
-                )
-                logger.info(f"SUPPORTED: {proto}")
-                ws.close()
-            except Exception as e:
-                logger.error(f"Rejected {proto}: {e}")
-
         # Connect to ARI websocket for audio stream
         ws = WebSocketApp(
             self._config["stt"]["ari_websocket_stream"],
-            # header={"Call-ID": channel.id},
-            subprotocols=["stream-call"],
+            header={"Call-ID": channel.id},
+            subprotocols=["stream-channel"],
             on_error=self._on_error,
             on_message=functools.partial(
                 self._on_message, channel=channel, tenant_uuid=tenant_uuid, dump=dump

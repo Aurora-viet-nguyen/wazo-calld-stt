@@ -38,12 +38,13 @@ class VietSttEngine(SttEngineBase):
         if not chunk:
             return
 
-        url = self._config["stt"]["stt_server"]
-        with requests.get(url, stream=True) as r:
-            r.raise_for_status()
-            for chunk in r.iter_content(chunk_size=1024):
-                if chunk:  # ignore keep-alive chunks
-                    print("Chunk:", chunk.decode()) 
+        logger.info(f"Chunk: {chunk.decode()}")
+        # url = self._config["stt"]["stt_server"]
+        # with requests.get(url, stream=True) as r:
+        #     r.raise_for_status()
+        #     for chunk in r.iter_content(chunk_size=1024):
+        #         if chunk:  # ignore keep-alive chunks
+        #             print("Chunk:", chunk.decode())
 
             
         # request = types.StreamingRecognizeRequest(audio_content=chunk)

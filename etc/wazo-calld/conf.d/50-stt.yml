@@ -6,7 +6,7 @@ stt:
   voice_ai_uri: ws://localhost:8765
   use_ai: false  # Enable AI agent for voice_ai engine
   dump_dir: /tmp/stt
-  ari_websocket_stream: ws://127.0.0.1:9502/ws
+  ari_websocket_stream: ws://127.0.0.1:5039/ws
   stt_server: https://3np3jvq0-8001.asse.devtunnels.ms/api/v1/stt
   language: fr
   stasis: true
