@@ -2,8 +2,11 @@
 # Copyright 2025 The Wazo Authors  (see the AUTHORS file)
 # SPDX-License-Identifier: GPL-3.0+
 
+import functools
 import requests
 import logging
+from typing import Any
+import websocket
 #from google.cloud import speech
 #from google.cloud.speech import enums
 #from google.cloud.speech import types
@@ -25,6 +28,8 @@ class VietSttEngine(SttEngineBase):
         #         encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
         #         sample_rate_hertz=16000,
         #         language_code=self._config["stt"]["language"]))
+
+        self.channels: dict[str, websocket.WebSocketApp] = {}
         pass
 
     def process_audio_chunk(self, channel, tenant_uuid, chunk):
@@ -35,18 +40,22 @@ class VietSttEngine(SttEngineBase):
             tenant_uuid: The tenant UUID
             chunk: Binary audio data
         """
-        if not chunk:
-            return
 
-        logger.info(f"Chunk: {chunk.decode()}")
-        # url = self._config["stt"]["stt_server"]
+        try:
+            if not chunk:
+                return
+            self.channels[channel.id].send_bytes(chunk)
+
+            logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
+        except Exception as e:
+            pass
+
         # with requests.get(url, stream=True) as r:
         #     r.raise_for_status()
         #     for chunk in r.iter_content(chunk_size=1024):
         #         if chunk:  # ignore keep-alive chunks
         #             print("Chunk:", chunk.decode())
 
-            
         # request = types.StreamingRecognizeRequest(audio_content=chunk)
         # responses = list(self._speech_client.streaming_recognize(
         #     self._streaming_config, [request]))
@@ -58,6 +67,15 @@ class VietSttEngine(SttEngineBase):
         #         if result.is_final:
         #             transcription = result.alternatives[0].transcript
         #             self.publish_transcription(channel, tenant_uuid, transcription)
+        pass
+
+    def on_error(self, ws, exc, channel):
+        logger.error(f"Got error for channel: {channel.id}, {exc}")
+
+    def on_close(self, ws, close_status_code, close_msg, channel):
+        logger.error(
+            f"Done for channel: {channel.id}: {close_msg} with status {close_status_code}"
+        )
 
     def start(self, channel, tenant_uuid, **kwargs):
         """Start processing for a channel
@@ -67,6 +85,13 @@ class VietSttEngine(SttEngineBase):
             **kwargs: Additional parameters (not used for Google STT)
         """
         logger.info(f"Google STT engine ready for channel: {channel.id}")
+
+        url = self._config["stt"]["stt_server"]
+        self.channels[channel.id] = websocket.WebSocketApp(
+            url,
+            on_close=functools.partial(self.on_close, channel=channel),
+            on_error=functools.partial(self.on_error, channel=channel),
+        )
         # Google engine doesn't need special initialization per channel
         return True
 
@@ -77,5 +102,8 @@ class VietSttEngine(SttEngineBase):
             channel_id: ID of the channel to stop
         """
         logger.info(f"Stopping Google STT for channel: {channel_id}")
+
+        self.channels[channel_id].close()
+
         # Google engine doesn't need special cleanup per channel
         return True
