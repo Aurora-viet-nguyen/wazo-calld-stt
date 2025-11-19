@@ -89,6 +89,9 @@ class VietSttEngine(SttEngineBase):
             f"Done for channel: {channel.id}: {close_msg} with status {close_status_code}"
         )
 
+    def on_message(self, ws, message, url: str):
+        logger.info(f"Got msg from {url}: {message}")
+
     def start(self, channel, tenant_uuid, **kwargs):
         """Start processing for a channel
         
@@ -106,6 +109,7 @@ class VietSttEngine(SttEngineBase):
                 url,
                 on_close=functools.partial(self.on_close, channel=channel),
                 on_error=functools.partial(self.on_error, channel=channel),
+                on_message=functools.partial(self.on_message, url=url),
             )
 
             def run_client():
