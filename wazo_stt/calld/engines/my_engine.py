@@ -5,6 +5,7 @@
 import functools
 import logging
 import websocket
+from threading import Thread
 #from google.cloud import speech
 #from google.cloud.speech import enums
 #from google.cloud.speech import types
@@ -17,6 +18,13 @@ def iter_chunks(buf, size=1024):
     mv = memoryview(buf)
     for i in range(0, len(buf), size):
         yield mv[i : i + size]
+
+
+class Channel:
+    def __init__(self, ws: websocket.WebSocketApp, t: Thread) -> None:
+        self.ws = ws
+        self.thread = t
+        pass
 
 
 class VietSttEngine(SttEngineBase):
@@ -32,7 +40,7 @@ class VietSttEngine(SttEngineBase):
         #         sample_rate_hertz=16000,
         #         language_code=self._config["stt"]["language"]))
 
-        self.channels: dict[str, websocket.WebSocketApp] = {}
+        self.channels: dict[str, Channel] = {}
         pass
 
     def process_audio_chunk(self, channel, tenant_uuid, buf):
@@ -48,7 +56,7 @@ class VietSttEngine(SttEngineBase):
             # if not chunk:
             #     return
             for chunk in iter_chunks(buf, 1024):
-                self.channels[channel.id].send_bytes(chunk)
+                self.channels[channel.id].ws.send_bytes(chunk)
             logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
         except Exception as e:
             logger.error(f"got ERROR: {e}")
@@ -94,11 +102,19 @@ class VietSttEngine(SttEngineBase):
 
         try:
             url = self._config["stt"]["stt_server"]
-            self.channels[channel.id] = websocket.WebSocketApp(
+            ws = websocket.WebSocketApp(
                 url,
                 on_close=functools.partial(self.on_close, channel=channel),
                 on_error=functools.partial(self.on_error, channel=channel),
             )
+
+            def run_client():
+                ws.run_forever()
+                logger.info("run_forever() has returned")
+
+            thread = Thread(target=run_client)
+
+            self.channels[channel.id] = Channel(ws, thread)
 
             logger.info(f"Done connecting to {url}")
         except Exception as e:
@@ -116,11 +132,11 @@ class VietSttEngine(SttEngineBase):
         logger.info(f"Stopping Google STT for channel: {channel_id}")
 
         try:
-            self.channels[channel_id].close()
+            channel = self.channels.pop(channel_id)
+            channel.ws.close()
+            channel.thread.join()
         except Exception as e:
             logger.error(f"got ERROR: {e}")
             return False
-        finally:
-            self.channels.pop(channel_id)
         # Google engine doesn't need special cleanup per channel
         return True
