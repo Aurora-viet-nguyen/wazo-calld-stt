@@ -113,6 +113,7 @@ class VietSttEngine(SttEngineBase):
                 logger.info("run_forever() has returned")
 
             thread = Thread(target=run_client)
+            thread.start()
 
             self.channels[channel.id] = Channel(ws, thread)
 
