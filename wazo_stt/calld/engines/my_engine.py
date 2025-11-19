@@ -113,7 +113,10 @@ class VietSttEngine(SttEngineBase):
         """
         logger.info(f"Stopping Google STT for channel: {channel_id}")
 
-        self.channels[channel_id].close()
-
+        try:
+            self.channels[channel_id].close()
+        except Exception as e:
+            logger.error(f"got ERROR: {e}")
+            return False
         # Google engine doesn't need special cleanup per channel
         return True
