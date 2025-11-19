@@ -169,7 +169,7 @@ class SttService(object):
             channel: The channel to handle
             tenant_uuid: The tenant UUID
         """
-        dump = self._open_dump(channel)
+        # dump = self._open_dump(channel)
 
         # Connect to ARI websocket for audio stream
         ws = WebSocketApp(
@@ -178,10 +178,10 @@ class SttService(object):
             subprotocols=["stream-channel"],
             on_error=self._on_error,
             on_message=functools.partial(
-                self._on_message, channel=channel, tenant_uuid=tenant_uuid, dump=dump
+                self._on_message, channel=channel, tenant_uuid=tenant_uuid, dump=None
             ),
             on_close=functools.partial(
-                self._on_close, channel=channel, tenant_uuid=tenant_uuid, dump=dump
+                self._on_close, channel=channel, tenant_uuid=tenant_uuid, dump=None
             ),
         )
         
@@ -238,8 +238,10 @@ class SttService(object):
             
         # Clean up this channel's entry in the websockets dict
         with self._shutdown_lock:
-            if channel.id in self._websockets and self._websockets[channel.id] is ws:
-                del self._websockets[channel.id]
+            if channel.id in self._websockets:
+                ws = self._websockets.pop(channel.id, None)
+                if ws is not None:
+                    self._engine.stop(channel_id=channel.id, tenant_uuid=tenant_uuid)
             
         logger.info(f"ARI websocket closed for channel: {channel.id}")
 
@@ -262,12 +264,12 @@ class SttService(object):
         else:
             self._buffers[channel.id].extend(chunk)
 
-        logger.info(f"got chunk data with len: {len(chunk)}")
+        # logger.info(f"got chunk data with len: {len(chunk)}")
 
         if len(self._buffers[channel.id]) < 1024:
             return
 
-        logger.info(f"send chunk data with len: {len(self._buffers[channel.id])}")
+        # logger.info(f"send chunk data with len: {len(self._buffers[channel.id])}")
         # logger.info(f"get {len(chunk)} of {type(chunk)}")
 
         # if len(chunk) < 1024 * 64:

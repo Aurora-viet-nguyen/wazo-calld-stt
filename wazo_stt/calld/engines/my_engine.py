@@ -57,10 +57,10 @@ class VietSttEngine(SttEngineBase):
             #     return
             for chunk in iter_chunks(buf, 1024):
                 self.channels[channel.id].ws.send_bytes(chunk)
-            logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
+            # logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
         except Exception as e:
-            logger.error(f"got ERROR: {e}")
-            pass
+            # logger.error(f"got ERROR: {e}")
+            raise e
 
         # with requests.get(url, stream=True) as r:
         #     r.raise_for_status()
