@@ -22,7 +22,7 @@ class SttService(object):
         self._ari = ari
         self._threadpool = ThreadPoolExecutor(max_workers=self._config["stt"]["workers"])
         self._engine_type = config["stt"]["engine"]
-        self._buffers = {}
+        self._buffers: dict[str, bytearray] = {}
         self._current_calls = {}
         self._websockets = {}  # Store websocket instances for each call
         self._shutdown_lock = threading.RLock()  # Lock for thread-safe shutdown
@@ -252,13 +252,22 @@ class SttService(object):
             tenant_uuid: The tenant UUID
             dump: The dump file
         """
-        chunk = self._buffers.setdefault(channel.id, b'') + message
-        self._buffers[channel.id] = chunk
+        # chunk = self._buffers.setdefault(channel.id, b'') + message
+        # self._buffers[channel.id] = chunk
+        chunk = bytearray(message)
 
-        logger.info(f"get {len(chunk)} of {type(chunk)}")
+        if channel.id not in self._buffers:
+            self._buffers[channel.id] = chunk
+        else:
+            self._buffers[channel.id].extend(chunk)
 
-        if len(chunk) < 1024 * 64:
+        if len(chunk) < 1024:
             return
+
+        # logger.info(f"get {len(chunk)} of {type(chunk)}")
+
+        # if len(chunk) < 1024 * 64:
+        #     return
 
         self._send_buffer(channel, tenant_uuid, dump)
 
@@ -271,11 +280,11 @@ class SttService(object):
             dump: The dump file
         """
         chunk = self._buffers.pop(channel.id, None)
-        if not chunk:
+        if (chunk is None) or (len(chunk) == 0):
             return
 
-        if dump:
-            dump.write(chunk)
+        # if dump:
+        #     dump.write(chunk)
             
         # Process the chunk with the engine
         try:

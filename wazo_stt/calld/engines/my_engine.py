@@ -3,9 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 import functools
-import requests
 import logging
-from typing import Any
 import websocket
 #from google.cloud import speech
 #from google.cloud.speech import enums
@@ -14,6 +12,11 @@ import websocket
 from .engine_base import SttEngineBase
 
 logger = logging.getLogger(__name__)
+
+def iter_chunks(buf, size=1024):
+    mv = memoryview(buf)
+    for i in range(0, len(buf), size):
+        yield mv[i : i + size]
 
 
 class VietSttEngine(SttEngineBase):
@@ -32,7 +35,7 @@ class VietSttEngine(SttEngineBase):
         self.channels: dict[str, websocket.WebSocketApp] = {}
         pass
 
-    def process_audio_chunk(self, channel, tenant_uuid, chunk):
+    def process_audio_chunk(self, channel, tenant_uuid, buf):
         """Process an audio chunk through Google STT
         
         Args:
@@ -42,12 +45,13 @@ class VietSttEngine(SttEngineBase):
         """
 
         try:
-            if not chunk:
-                return
-            self.channels[channel.id].send_bytes(chunk)
-
+            # if not chunk:
+            #     return
+            for chunk in iter_chunks(buf, 1024):
+                self.channels[channel.id].send_bytes(chunk)
             logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
         except Exception as e:
+            logger.error(f"got ERROR: {e}")
             pass
 
         # with requests.get(url, stream=True) as r:
