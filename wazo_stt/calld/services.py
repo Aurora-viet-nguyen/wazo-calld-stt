@@ -94,6 +94,7 @@ class SttService(object):
                 
                 # Stop the engine for this channel (will close Voice AI websocket)
                 try:
+                    logger.error(f"VIETNGUYEN: stopping engine for channel {call_id}")
                     self._engine.stop(call_id, tenant_uuid)
                 except Exception as e:
                     logger.error(f"Error stopping engine for channel {call_id}: {e}")

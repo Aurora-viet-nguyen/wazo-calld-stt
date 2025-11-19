@@ -89,6 +89,8 @@ class VietSttEngine(SttEngineBase):
             **kwargs: Additional parameters (not used for Google STT)
         """
         logger.info(f"Google STT engine ready for channel: {channel.id}")
+        if channel.id in self.channels:
+            return True
 
         try:
             url = self._config["stt"]["stt_server"]
@@ -118,5 +120,7 @@ class VietSttEngine(SttEngineBase):
         except Exception as e:
             logger.error(f"got ERROR: {e}")
             return False
+        finally:
+            self.channels.pop(channel_id)
         # Google engine doesn't need special cleanup per channel
         return True
