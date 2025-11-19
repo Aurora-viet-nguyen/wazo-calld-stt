@@ -90,12 +90,18 @@ class VietSttEngine(SttEngineBase):
         """
         logger.info(f"Google STT engine ready for channel: {channel.id}")
 
-        url = self._config["stt"]["stt_server"]
-        self.channels[channel.id] = websocket.WebSocketApp(
-            url,
-            on_close=functools.partial(self.on_close, channel=channel),
-            on_error=functools.partial(self.on_error, channel=channel),
-        )
+        try:
+            url = self._config["stt"]["stt_server"]
+            self.channels[channel.id] = websocket.WebSocketApp(
+                url,
+                on_close=functools.partial(self.on_close, channel=channel),
+                on_error=functools.partial(self.on_error, channel=channel),
+            )
+
+            logger.info(f"Done connecting to {url}")
+        except Exception as e:
+            logger.error(f"got ERROR: {e}")
+            return False
         # Google engine doesn't need special initialization per channel
         return True
 
