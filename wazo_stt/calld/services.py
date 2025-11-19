@@ -261,9 +261,12 @@ class SttService(object):
         else:
             self._buffers[channel.id].extend(chunk)
 
+        logger.info(f"got chunk data with len: {len(chunk)}")
+
         if len(chunk) < 1024:
             return
 
+        logger.info(f"send chunk data with len: {len(chunk)}")
         # logger.info(f"get {len(chunk)} of {type(chunk)}")
 
         # if len(chunk) < 1024 * 64:
