@@ -59,7 +59,7 @@ class VietSttEngine(SttEngineBase):
                 self.channels[channel.id].ws.send_bytes(chunk)
             # logger.info(f"{len(chunk)} of {type(chunk)} has been sent")
         except Exception as e:
-            # logger.error(f"got ERROR: {e}")
+            logger.error(f"got ERROR: {e}")
             raise e
 
         # with requests.get(url, stream=True) as r:
